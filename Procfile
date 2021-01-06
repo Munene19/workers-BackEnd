@@ -1,1 +1,1 @@
-web: gunicorn findworkers.wsgi
+web: gunicorn findworkers.wsgi --log-file -
