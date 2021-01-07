@@ -1,6 +1,6 @@
 from django.contrib import admin
 from .models import User, Jobpost, Reviews, Profile, jobcategory
-from django.contrib import admin
+from django.contrib.auth.admin import UserAdmin
 
 # Register your models here.
 admin.site.register(User)
@@ -8,7 +8,6 @@ admin.site.register(Jobpost)
 admin.site.register(jobcategory)
 admin.site.register(Profile)
 admin.site.register(Reviews)
-
 
 class Review_Admin(admin.ModelAdmin):
     list_display = ('name', 'body', 'post', 'created_on', 'active')
@@ -18,3 +17,4 @@ class Review_Admin(admin.ModelAdmin):
 
     def approve_reviews(self, request, queryset):
         queryset.update(active=True)
+

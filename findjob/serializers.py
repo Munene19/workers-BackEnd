@@ -1,8 +1,10 @@
 from django.contrib.auth import authenticate
-
+from django.db import transaction
 from rest_framework import serializers
+from dj_rest_auth.registration.serializers import RegisterSerializer
+from allauth.account.adapter import get_adapter
+from .models import User, Jobpost, Profile, Reviews, Role
 
-from .models import User, Jobpost
 
 class RegistrationSerializer(serializers.ModelSerializer):
     password = serializers.CharField(
@@ -11,22 +13,43 @@ class RegistrationSerializer(serializers.ModelSerializer):
         write_only=True
     )
 
+    password2 = serializers.CharField(
+        max_length=128,
+        min_length=8,
+        write_only=True
+    )
+
+
     class Meta:
         model = User
-        fields = ['email', 'username', 'password', 'token']
-
-    
+        fields = ['email', 'username', 'password', 'password2']
+           
     def validate_password1(self, password):
         return get_adapter().clean_password(password)
 
     def validate(self, data):
-        if data['password1'] != data['password2']:
+        if data['password'] != data['password2']:
             raise serializers.ValidationError(
                 ("The two password fields didn't match."))
         return data
 
-    def create(self, validated_data):
-        return User.objects.create_user(**validated_data)
+    def get_cleaned_data(self):
+        return {
+            'password': self.validated_data.get('password', ''),
+            'email': self.validated_data.get('email', ''),
+        }
+
+    def save(self, request):
+        adapter = get_adapter()
+        user = adapter.new_user(request)
+        self.cleaned_data = self.get_cleaned_data()
+        adapter.save_user(request, user, self)
+        return user
+
+        user.save()
+        return user
+
+
 
 
 
@@ -95,9 +118,31 @@ class UserSerializer(serializers.ModelSerializer):
 
         return instance
 
+class ProfileSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Profile 
+        
+        fields= '__all__'
+
 class JobpostSerializer(serializers.ModelSerializer):
 
     class Meta:
-        model = Jobpost 
+        model = Jobpost
+        
+        fields= ('user', 'title', 'job_category', 'job_description', 'contact', 'location')
+
+
+class ReviewsSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Reviews
+        
+        fields= '__all__'
+
+class RoleSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Role
         
         fields= '__all__'
